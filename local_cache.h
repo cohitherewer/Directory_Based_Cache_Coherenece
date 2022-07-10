@@ -62,7 +62,8 @@ public:
 	}
 
 	void cache_update(address *addr){
-		if(blocks.size()>=capacity){
+		// cout<<"FUCK\n";
+		if(blocks.size()>=this->capacity){
 			blocks.erase(blocks.begin());
 		}
 		blocks.push_back(addr);

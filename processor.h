@@ -1,6 +1,6 @@
 #include "local_cache.h"
 
-#define CACHE_CAPACITY 10
+#define CACHE_CAPACITY 100
 
 /*
 	CLASS for PROCESSOR PROGRAM
@@ -15,6 +15,7 @@ private:
 		int index=0;
 		for(auto it:dir->D){
 			if(addr->location==it.first->location){
+				dbg(index);
 				return index;
 			}else{
 				index+=1;
@@ -24,7 +25,9 @@ private:
 	}
 
 	void directory_modification(directory *dir,address *addr,int pro_index,int processor_count,string request_type){
-		if(request_type=="READ"){
+		// cout<<request_type<<endl;
+		// dbg(request_type);
+		if(request_type[0]=='R'){
 			if(dir->is_full()){
 				// delete the first position
 				dir->D.erase(dir->D.begin());
@@ -35,14 +38,27 @@ private:
 			dir->D[dir->D.size()-1].second[pro_index]=1;
 			// mark exclusive bit as 1
 			dir->D[dir->D.size()-1].second[processor_count]=1;
-		}else if(request_type=="WRITE"){
+		}else if(request_type[0]=='W'){
 			int position=search_directory(dir,addr);
-			for(int itr=0;itr<dir->D[position].second.size();itr+=1){
-				dir->D[position].second[itr]=0;
-			}
+			if(position!=-1){
+				for(int itr=0;itr<dir->D[position].second.size();itr+=1){
+					dir->D[position].second[itr]=0;
+				}
 			// make the exclusive bit 1
-			dir->D[position].second[processor_count]=1;
-			dir->D[position].second[pro_index]=1;
+				dir->D[position].second[processor_count]=1;
+				dir->D[position].second[pro_index]=1;
+			}else{
+				if(dir->is_full()){
+				// delete the first position
+					dir->D.erase(dir->D.begin());
+				}
+				vector<int> bit_array(processor_count+1,0);
+				dir->D.push_back(make_pair(addr,bit_array));
+			// mark that directory
+				dir->D[dir->D.size()-1].second[pro_index]=1;
+			// mark exclusive bit as 1
+				dir->D[dir->D.size()-1].second[processor_count]=1;
+			}
 		}else{
 			printf("INVALID REQUEST\n");
 		}
@@ -60,7 +76,10 @@ public:
 		// return empty list for read request
 		// return list of caches for write request
 		// need to invalidate those caches
-		if(request_type=="READ"){
+		// cout<<request_type<<endl;
+		dbg(request_type[0]);
+
+		if(request_type[0]=='R'){
 			// if found in local cache do nothing
 			if(L1_cache->read_request(addr)){
 				printf("L1 READ HIT");
@@ -83,10 +102,11 @@ public:
 				L1_cache->cache_update(addr);
 			}
 			return {};
-		}else if(request_type=="WRITE"){
+		}else if(request_type[0]=='W'){
 			// if write request
 			// find if the block is in directory
 			int position=search_directory(dir,addr);
+			// dbg(position);
 			vector<int> caches;
 			if(position!=-1){
 				// int pro_index=0;
@@ -96,13 +116,15 @@ public:
 					}
 				}
 			}
+			// dbg(position);
 			L1_cache->cache_update(addr);
 			// directory miss
+			// dbg(position);
 			directory_modification(dir,addr,pro_index,processor_count,request_type);
 			return caches;
 		}else{
 			// some valid test case checking
-			printf("INVALID REQUEST");return {};
+			printf("INVALID REQUEST-1");return {};
 		}
 		return {};
 	}
