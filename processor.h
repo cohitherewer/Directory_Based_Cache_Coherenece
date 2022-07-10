@@ -12,7 +12,7 @@ private:
 	int search_directory(directory *dir,address *addr){
 		// This function searches the address in the directory and returns its corresponding index
 		// returns -1 if not found
-		int index=-1;
+		int index=0;
 		for(auto it:dir->D){
 			if(addr->location==it.first->location){
 				return index;
@@ -23,17 +23,29 @@ private:
 		return -1;
 	}
 
-	void directory_modification(directory *dir,address *addr,int pro_index,int processor_count){
-		if(dir->is_full()){
-			// delete the first position
-			dir->D.erase(dir->D.begin());
+	void directory_modification(directory *dir,address *addr,int pro_index,int processor_count,string request_type){
+		if(request_type=="READ"){
+			if(dir->is_full()){
+				// delete the first position
+				dir->D.erase(dir->D.begin());
+			}
+			vector<int> bit_array(processor_count+1,0);
+			dir->D.push_back(make_pair(addr,bit_array));
+			// mark that directory
+			dir->D[dir->D.size()-1].second[pro_index]=1;
+			// mark exclusive bit as 1
+			dir->D[dir->D.size()-1].second[processor_count]=1;
+		}else if(request_type=="WRITE"){
+			int position=search_directory(dir,addr);
+			for(int itr=0;itr<dir->D[position].second.size();itr+=1){
+				dir->D[position].second[itr]=0;
+			}
+			// make the exclusive bit 1
+			dir->D[position].second[processor_count]=1;
+			dir->D[position].second[pro_index]=1;
+		}else{
+			printf("INVALID REQUEST\n");
 		}
-		vector<int> bit_array(processor_count+1,0);
-		dir->D.push_back(make_pair(addr,bit_array));
-		// mark that directory
-		dir->D[dir->D.size()-1].second[pro_index]=1;
-		// mark exclusive bit as 1
-		dir->D[dir->D.size()-1].second[processor_count]=1;
 	}
 public:
 	Processor(){
@@ -56,7 +68,8 @@ public:
 				// search in directory
 				int position=search_directory(dir,addr);
 				if(position!=-1){
-					printf("WE got it in directory");
+					printf("WE got it in directory\n");
+					printf("position: %d\n",position);
 					// now find out in which cache the block is there
 					if(dir->D[position].second[processor_count]==1){
 						dir->D[position].second[processor_count]=0;
@@ -65,9 +78,9 @@ public:
 				}else{
 					// directory miss Got it from main memory
 					// lets assume that main memory always contains the block
-					directory_modification(dir,addr,pro_index,processor_count);
+					directory_modification(dir,addr,pro_index,processor_count,request_type);
 				}
-
+				L1_cache->cache_update(addr);
 			}
 			return {};
 		}else if(request_type=="WRITE"){
@@ -83,8 +96,9 @@ public:
 					}
 				}
 			}
+			L1_cache->cache_update(addr);
 			// directory miss
-			directory_modification(dir,addr,pro_index,processor_count);
+			directory_modification(dir,addr,pro_index,processor_count,request_type);
 			return caches;
 		}else{
 			// some valid test case checking
@@ -103,7 +117,9 @@ public:
 	}
 
 	void show_processor(directory *dir){
-		L1_cache->show_cache();
+		cout<<"CACHE: ";
+		L1_cache->show_cache();cout<<endl;
+		cout<<"DIRECTORY: ";
 		dir->show_directory();
 	}
 };

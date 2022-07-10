@@ -22,7 +22,7 @@ private:
 		return false;
 	}
 	int find_block(address *addr){
-		int index=-1;
+		int index=0;
 		for(auto it:blocks){
 			if(it->location==addr->location){
 				return index;
@@ -61,6 +61,12 @@ public:
 		}
 	}
 
+	void cache_update(address *addr){
+		if(blocks.size()>=capacity){
+			blocks.erase(blocks.begin());
+		}
+		blocks.push_back(addr);
+	}
 	void show_cache(){
 		for(auto it:blocks){
 			printf("%d ",it->location);
