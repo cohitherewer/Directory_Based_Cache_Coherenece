@@ -129,16 +129,17 @@ public:
 		return {};
 	}
 
-	void cache_modification(directory *dir,Processor another_processor,address *addr,int pro_index,int processor_count){
+	void cache_modification(directory *dir,Processor *another_processor,address *addr,int pro_index,int processor_count){
 		// modifies the caches
 		int position=this->search_directory(dir,addr);
 		dir->D[position].second[pro_index]=0;
 		// if(this->dir->D[position].second[processor_count])
 
-		another_processor.L1_cache->delete_block(addr);
+		another_processor->L1_cache->delete_block(addr);
 	}
 
 	void show_processor(directory *dir){
+
 		cout<<"CACHE: ";
 		L1_cache->show_cache();cout<<endl;
 		cout<<"DIRECTORY: ";

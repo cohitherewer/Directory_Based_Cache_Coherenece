@@ -8,8 +8,11 @@
 
 class local_cache{
 private:
+	// private members:
+	// capacity and blocks containing the addresses
 	int capacity;
 	vector<address *> blocks;
+
 
 	bool block_exist(address *request){
 		// This functions returns if the blocks existance
@@ -21,7 +24,10 @@ private:
 		}
 		return false;
 	}
+	
 	int find_block(address *addr){
+		// this blocks finds the block in local cache
+		// return true if found
 		int index=0;
 		for(auto it:blocks){
 			if(it->location==addr->location){
@@ -33,7 +39,10 @@ private:
 		return -1;
 	}
 public:
+	// default constructor is deleted
 	local_cache()=delete;
+
+	// additional constructore is there 
 	local_cache(int capacity){
 		// instantiate a local bus with caching ability with 10 blocks with some capacity;
 		this->capacity=capacity;
@@ -55,6 +64,7 @@ public:
 	}
 
 	void delete_block(address *addr){
+		// delete the block while full or necessary
 		int position=find_block(addr);
 		if(position!=-1){
 			blocks.erase(blocks.begin()+position+1);
@@ -62,13 +72,15 @@ public:
 	}
 
 	void cache_update(address *addr){
-		// cout<<"FUCK\n";
+		// update the L1 cache block when necessay
 		if(blocks.size()>=this->capacity){
 			blocks.erase(blocks.begin());
 		}
 		blocks.push_back(addr);
 	}
+
 	void show_cache(){
+		// show the content of cache block
 		for(auto it:blocks){
 			printf("%d ",it->location);
 		}
